@@ -38,11 +38,14 @@ public class PatientRepositoryImpl
         }
     }
 
-    public void deletePatient(int patientId) {
-        try (Session session = sessionFactory.openSession()) {
+    public void deletePatient(int patientId)
+    {
+        try (Session session = sessionFactory.openSession())
+        {
             Transaction transaction = session.beginTransaction();
             Patient patient = session.get(Patient.class, patientId);
-            if (patient != null) {
+            if (patient != null)
+            {
                 session.delete(patient);
             }
             transaction.commit();

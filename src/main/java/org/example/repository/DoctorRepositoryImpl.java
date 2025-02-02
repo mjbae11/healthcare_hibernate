@@ -1,5 +1,6 @@
 package org.example.repository;
 
+import jakarta.transaction.Transactional;
 import org.example.model.Doctor;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
@@ -32,12 +33,7 @@ public class DoctorRepositoryImpl
     {
         try (Session session = sessionFactory.openSession())
         {
-            Doctor doctor = session.get(Doctor.class, doctorId);
-            if (doctor == null)
-            {
-                return null;
-            }
-            return doctor;
+            return session.get(Doctor.class, doctorId);
         }
     }
 
@@ -53,12 +49,12 @@ public class DoctorRepositoryImpl
     }
 
     // DELETE
-    public void deleteDoctor(int doctorid)
+    public void deleteDoctor(int doctorId)
     {
         try (Session session = sessionFactory.openSession())
         {
             Transaction transaction = session.beginTransaction();
-            Doctor doctor = session.get(Doctor.class, doctorid);
+            Doctor doctor = session.get(Doctor.class, doctorId);
             if (doctor != null)
             {
                 session.delete(doctor);
@@ -68,6 +64,7 @@ public class DoctorRepositoryImpl
     }
 
     // GET all the doctors
+
     public List<Doctor> getAllDoctors()
     {
         try (Session session = sessionFactory.openSession())

@@ -147,6 +147,7 @@ public class Main {
                         System.out.println("Patient not found.");
                     }
                     break;
+                // DELETE PATIENT
                 case 4:
                     // Application calls the service layer, not the repository directly
                     System.out.print("Enter Patient ID: ");
@@ -226,19 +227,18 @@ public class Main {
                 case 3:
                     // Application calls the service layer, not the repository directly
                     System.out.print("Enter Doctor ID: ");
-                    int doctorId = scanner.nextInt();
+                    Doctor updateDoctor = doctorService.getDoctorById(scanner.nextInt());// Use service here
                     scanner.nextLine();  // consume newline
-                    doctor = doctorService.getDoctorById(doctorId);  // Use service here
-                    if (doctor != null) {
+                    if (updateDoctor != null) {
                         System.out.print("Enter new first name: ");
-                        doctor.setFirstName(scanner.nextLine());
+                        updateDoctor.setFirstName(scanner.nextLine());
                         System.out.print("Enter new last name: ");
-                        doctor.setLastName(scanner.nextLine());
+                        updateDoctor.setLastName(scanner.nextLine());
                         System.out.print("Enter new email: ");
-                        doctor.setEmail(scanner.nextLine());
+                        updateDoctor.setEmail(scanner.nextLine());
                         System.out.print("Enter new specialty: ");
-                        doctor.setSpeciality(scanner.nextLine());
-                        doctorService.updateDoctor(doctor);  // Use service here
+                        updateDoctor.setSpeciality(scanner.nextLine());
+                        doctorService.updateDoctor(updateDoctor);  // Use service here
                         System.out.println("Doctor updated successfully.");
                     } else {
                         System.out.println("Doctor not found.");
@@ -247,12 +247,10 @@ public class Main {
                 // 4. Delete Doctor
                 case 4:
                     // Application calls the service layer, not the repository directly
-                    // Application calls the service layer, not the repository directly
                     System.out.print("Enter Doctor ID: ");
-                    doctorId = scanner.nextInt();
+                    int doctorId = scanner.nextInt();
                     if (doctorService.getDoctorById(doctorId) != null)
                     {
-                        // Use service here
                         doctorService.deleteDoctor(doctorId);
                         System.out.println("Doctor deleted successfully.");
                     } else
