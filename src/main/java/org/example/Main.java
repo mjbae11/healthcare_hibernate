@@ -4,10 +4,7 @@ import org.example.model.Appointment;
 import org.example.model.Doctor;
 import org.example.model.Patient;
 import org.example.repository.PatientRepositoryImpl;
-import org.example.service.AppointmentService;
-import org.example.service.DoctorService;
-import org.example.service.PatientService;
-import org.example.service.SetUpMain;
+import org.example.service.*;
 
 import java.util.InputMismatchException;
 import java.util.Scanner;
@@ -15,8 +12,6 @@ import java.util.Scanner;
 public class Main {
 
     private static SetUpMain setUpMain;
-
-
 
     public static void main(String[] args) {
         Main.setUpMain= new SetUpMain();
@@ -28,7 +23,8 @@ public class Main {
             System.out.println("1. Manage patients");
             System.out.println("2. Manage Doctors");
             System.out.println("3. Manage Appointments");
-            System.out.println("4. Exit");
+            System.out.println("4. Manage Offices");
+            System.out.println("5. Exit");
             System.out.println("--------------------------------");
             System.out.print("Enter an number: " );
             int option;
@@ -54,6 +50,8 @@ public class Main {
                     manageAppointments(setUpMain.getAppointmentService(), scanner);
                     break;
                 case 4:
+                    manageOffices(setUpMain.getOfficeService(), scanner);
+                case 5:
                     exit = true;
                     System.out.println("Exiting...");
             }
@@ -378,5 +376,10 @@ public class Main {
                     exit = true;
             }
         } while (!exit);
+    }
+
+    public void manageOffices(OfficeService officeService, Scanner scanner)
+    {
+
     }
 }

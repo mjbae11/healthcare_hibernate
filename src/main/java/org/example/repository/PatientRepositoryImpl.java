@@ -46,9 +46,8 @@ public class PatientRepositoryImpl
             Transaction transaction = session.beginTransaction();
             Patient patient = session.get(Patient.class, patientId);
             if (patient != null)
-            {
                 session.delete(patient);
-            }
+
             transaction.commit();
         }
     }
