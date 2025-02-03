@@ -1,5 +1,6 @@
 package org.example.service;
 
+import org.example.model.Doctor;
 import org.example.model.Patient;
 import org.example.repository.PatientRepositoryImpl;
 
@@ -32,5 +33,15 @@ public class PatientService
 
     public void deletePatient(int id) {
         patientRepository.deletePatient(id);
+    }
+
+    public void addDoctorToPatient(int patientId, Doctor doctor)
+    {
+        patientRepository.addDoctorToPatient(patientId, doctor);
+    }
+
+    public void removeDoctorFromPatient(int patientId, Doctor doctor)
+    {
+        patientRepository.removeDoctorFromPatient(patientId, doctor);
     }
 }

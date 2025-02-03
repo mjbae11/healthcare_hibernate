@@ -32,4 +32,9 @@ public class AppointmentService
     public void deleteAppointment(int id) {
         appointmentRepository.deleteAppointment(id);
     }
+
+    public boolean hasOtherAppointmentsBetween(int doctorId, int patientId)
+    {
+        return appointmentRepository.hasOtherAppointmentsBetween(doctorId, patientId);
+    }
 }

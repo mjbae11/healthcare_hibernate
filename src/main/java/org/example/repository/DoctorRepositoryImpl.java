@@ -1,7 +1,7 @@
 package org.example.repository;
 
-import jakarta.transaction.Transactional;
 import org.example.model.Doctor;
+import org.example.model.Patient;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.Transaction;
@@ -70,6 +70,38 @@ public class DoctorRepositoryImpl
         try (Session session = sessionFactory.openSession())
         {
             return session.createQuery("from Doctor", Doctor.class).list();
+        }
+    }
+
+    // Add Patient to Doctor
+    public void addPatientToDoctor(int doctorId, Patient patient)
+    {
+        try (Session session = sessionFactory.openSession())
+        {
+            Transaction transaction = session.beginTransaction();
+            Doctor doctor = session.get(Doctor.class, doctorId);
+            if (doctor != null && !doctor.getPatients().contains(patient))
+            {
+                doctor.getPatients().add(patient);
+                session.merge(doctor);
+            }
+            transaction.commit();
+        }
+    }
+
+    // Remove Patient from Doctor
+    public void removePatientFromDoctor(int doctorId, Patient patient)
+    {
+        try (Session session = sessionFactory.openSession())
+        {
+            Transaction transaction = session.beginTransaction();
+            Doctor doctor = session.get(Doctor.class, doctorId);
+            if (doctor != null && doctor.getPatients().contains(patient))
+            {
+                doctor.getPatients().remove(patient);
+                session.merge(doctor);
+            }
+            transaction.commit();
         }
     }
 }

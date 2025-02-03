@@ -1,5 +1,6 @@
 package org.example.repository;
 
+import org.example.model.Doctor;
 import org.example.model.Patient;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
@@ -50,28 +51,45 @@ public class PatientRepositoryImpl
             }
             transaction.commit();
         }
-//        try (Session session = sessionFactory.openSession()) {
-//            Transaction transaction = session.beginTransaction();
-//
-//            // Clear appointments first
-//            String appointmentHql = "delete from Appointment where patient.patientId = :pid";
-//            session.createQuery(appointmentHql)
-//                    .setParameter("pid", patientId)
-//                    .executeUpdate();
-//
-//            // Then delete patient
-//            String patientHql = "delete from Patient where patientId = :pid";
-//            session.createQuery(patientHql)
-//                    .setParameter("pid", patientId)
-//                    .executeUpdate();
-//
-//            transaction.commit();
-//        }
     }
 
-    public List<Patient> getAllPatients() {
-        try (Session session = sessionFactory.openSession()) {
+    public List<Patient> getAllPatients()
+    {
+        try (Session session = sessionFactory.openSession())
+        {
             return session.createQuery("from Patient", Patient.class).list();
+        }
+    }
+
+    // add Doctor to Patient
+    public void addDoctorToPatient(int patientId, Doctor doctor)
+    {
+        try (Session session = sessionFactory.openSession())
+        {
+            Transaction transaction = session.beginTransaction();
+            Patient patient = session.get(Patient.class, patientId);
+            if (patient != null && !patient.getDoctors().contains(doctor))
+            {
+                patient.getDoctors().add(doctor);
+                session.merge(patient);
+            }
+            transaction.commit();
+        }
+    }
+
+    // remove Doctor from Patient
+    public void removeDoctorFromPatient(int patientId, Doctor doctor)
+    {
+        try (Session session = sessionFactory.openSession())
+        {
+            Transaction transaction = session.beginTransaction();
+            Patient patient = session.get(Patient.class, patientId);
+            if (patient != null && patient.getDoctors().contains(doctor))
+            {
+                patient.getDoctors().remove(doctor);
+                session.merge(patient);
+            }
+            transaction.commit();
         }
     }
 }
