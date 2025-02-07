@@ -9,7 +9,7 @@ import java.util.List;
 
 public class OfficeRepositoryImpl
 {
-    private SessionFactory sessionFactory;
+    private final SessionFactory sessionFactory;
 
     // Constructor
     public OfficeRepositoryImpl(SessionFactory sessionFactory)
@@ -38,12 +38,12 @@ public class OfficeRepositoryImpl
     }
 
     // update existing office details
-    public void updateOffice(int officeId)
+    public void updateOffice(Office office)
     {
         try (Session session = sessionFactory.openSession())
         {
             Transaction transaction = session.beginTransaction();
-            session.update(officeId);
+            session.update(office);
             transaction.commit();
         }
     }
@@ -55,9 +55,13 @@ public class OfficeRepositoryImpl
             Transaction transaction = session.beginTransaction();
             Office office = session.get(Office.class, officeId);
             if (office != null)
-                session.delete(officeId);
+            {
+                office.setDoctor(null);
+                session.update(office);
+                session.delete(office);
+                transaction.commit();
+            }
 
-            transaction.commit();
         }
     }
 

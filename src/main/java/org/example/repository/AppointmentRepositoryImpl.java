@@ -9,7 +9,7 @@ import java.util.List;
 
 public class AppointmentRepositoryImpl
 {
-    private SessionFactory sessionFactory;
+    private final SessionFactory sessionFactory;
 
     public AppointmentRepositoryImpl(SessionFactory sessionFactory)
     {
@@ -28,13 +28,8 @@ public class AppointmentRepositoryImpl
 
     public Appointment getAppointmentById(int appointmentId)
     {
-        try (Session session = sessionFactory.openSession())
-        {
-            Appointment appointment = session.get(Appointment.class, appointmentId);
-            if (appointment != null)
-                return appointment;
-            else
-                return null;
+        try (Session session = sessionFactory.openSession()) {
+            return session.get(Appointment.class, appointmentId);
         }
     }
 

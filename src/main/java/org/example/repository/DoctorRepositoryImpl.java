@@ -10,7 +10,7 @@ import java.util.List;
 
 public class DoctorRepositoryImpl
 {
-    private SessionFactory sessionFactory;
+    private final SessionFactory sessionFactory;
 
     public DoctorRepositoryImpl(SessionFactory sessionFactory)
     {
@@ -33,6 +33,7 @@ public class DoctorRepositoryImpl
     {
         try (Session session = sessionFactory.openSession())
         {
+            // from this appointment, get the single doctor int there
             return session.get(Doctor.class, doctorId);
         }
     }
@@ -98,6 +99,7 @@ public class DoctorRepositoryImpl
             Doctor doctor = session.get(Doctor.class, doctorId);
             if (doctor != null && doctor.getPatients().contains(patient))
             {
+                System.out.println("entered doctor not null and contain patients");
                 doctor.getPatients().remove(patient);
                 session.merge(doctor);
             }

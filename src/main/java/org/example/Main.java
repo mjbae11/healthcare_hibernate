@@ -2,63 +2,76 @@ package org.example;
 
 import org.example.model.Appointment;
 import org.example.model.Doctor;
+import org.example.model.Office;
 import org.example.model.Patient;
+import org.example.repository.AppointmentRepositoryImpl;
+import org.example.repository.DoctorRepositoryImpl;
+import org.example.repository.OfficeRepositoryImpl;
 import org.example.repository.PatientRepositoryImpl;
 import org.example.service.*;
+import org.hibernate.SessionFactory;
+import org.hibernate.cfg.Configuration;
 
 import java.util.InputMismatchException;
 import java.util.Scanner;
 
 public class Main {
 
-    private static SetUpMain setUpMain;
+//    private static SetUpMain setUpMain;
 
     public static void main(String[] args) {
-        Main.setUpMain= new SetUpMain();
-        // handling first menu
+
+        SessionFactory sessionFactory = new Configuration().configure("patient.cfg.xml").buildSessionFactory();
+
+        // Repositories
+        DoctorRepositoryImpl doctorRepository = new DoctorRepositoryImpl(sessionFactory);
+        PatientRepositoryImpl patientRepository = new PatientRepositoryImpl(sessionFactory);
+        AppointmentRepositoryImpl appointmentRepository = new AppointmentRepositoryImpl(sessionFactory);
+        OfficeRepositoryImpl officeRepository = new OfficeRepositoryImpl(sessionFactory);
+        // Services
+        DoctorService doctorService = new DoctorService(doctorRepository);
+        PatientService patientService = new PatientService(patientRepository);
+        AppointmentService appointmentService = new AppointmentService(appointmentRepository,doctorRepository,patientRepository);
+        OfficeService officeService = new OfficeService(officeRepository);
+        // Main Menu
         Scanner scanner = new Scanner(System.in);
         boolean exit = false;
-        do
-        {
-            System.out.println("1. Manage patients");
+
+        while (!exit) {
+            System.out.println("\nHealthcare Management System");
+            System.out.println("1. Manage Patients");
             System.out.println("2. Manage Doctors");
             System.out.println("3. Manage Appointments");
             System.out.println("4. Manage Offices");
             System.out.println("5. Exit");
-            System.out.println("--------------------------------");
-            System.out.print("Enter an number: " );
-            int option;
-            try
-            {
-                option = scanner.nextInt();
-                scanner.nextLine(); // Clear buffer
-            } catch (InputMismatchException e)
-            {
-                System.out.println("Please enter a valid number");
-                scanner.nextLine(); // Clear invalid input
-                option = 0; // Set default value
-            }
-            switch (option)
-            {
+            System.out.print("Please enter a number:");
+            int choice = scanner.nextInt();
+            scanner.nextLine();  // consume newline
+
+            switch (choice) {
                 case 1:
-                    managePatients(setUpMain.getPatientService(), scanner);
+                    managePatients(patientService, scanner);
                     break;
                 case 2:
-                    manageDoctors(setUpMain.getDoctorService(), scanner);
+                    manageDoctors(doctorService, scanner);
                     break;
                 case 3:
-                    manageAppointments(setUpMain.getAppointmentService(), scanner);
+                    manageAppointments(appointmentService, patientService, doctorService, scanner);
                     break;
                 case 4:
-                    manageOffices(setUpMain.getOfficeService(), scanner);
+                    manageOffices(officeService, doctorService, scanner);
+                    break;
                 case 5:
                     exit = true;
-                    System.out.println("Exiting...");
+                    System.out.println("Exiting Healthcare Management System.");
+                    break;
+                default:
+                    System.out.println("Invalid choice. Please select a valid option.");
             }
-        } while (!exit);
-        // Close scanner at very end
+        }
+
+        sessionFactory.close();
         scanner.close();
-        setUpMain.getSessionFactory().close();
     }
 
     private static void managePatients(PatientService patientService, Scanner scanner)
@@ -265,7 +278,7 @@ public class Main {
 
 
     // manage appointments
-    private static void manageAppointments(AppointmentService appointmentService, Scanner scanner)
+    private static void manageAppointments(AppointmentService appointmentService, PatientService patientService, DoctorService doctorService, Scanner scanner)
     {
         boolean exit = false;
         do
@@ -295,7 +308,8 @@ public class Main {
                     // Application calls the service layer, not the repository directly
                     Appointment newAppointment = new Appointment();
                     System.out.print("Enter Patient ID: ");
-                    Patient patient = setUpMain.getPatientService().getPatientById(scanner.nextInt());
+                    int createPatientId = scanner.nextInt();
+                    Patient patient = patientService.getPatientById(createPatientId);
                     // Exception Handling if patient exists
                     if (patient != null) {
                         newAppointment.setPatient(patient);
@@ -306,7 +320,8 @@ public class Main {
                     // Clear line
                     scanner.nextLine();
                     System.out.print("Enter Doctor Id: ");
-                    Doctor doctor = setUpMain.getDoctorService().getDoctorById(scanner.nextInt());
+                    int createDoctorId = scanner.nextInt();
+                    Doctor doctor = doctorService.getDoctorById(createDoctorId);
                     // Exception Handling if patient exists
                     if (doctor != null) {
                         newAppointment.setDoctor(doctor);
@@ -321,7 +336,10 @@ public class Main {
                     System.out.print("Enter notes: ");
                     newAppointment.setNotes(scanner.nextLine());
                     appointmentService.createAppointment(newAppointment);  // Use service here
-                    System.out.println("Appointment created successfully.");
+                    // Adding appointment to respective patient doctor relationship
+                    doctorService.addPatientToDoctor(createDoctorId, patient);
+                    patientService.addDoctorToPatient(createPatientId, doctor);
+                    System.out.println("Appointment created successfully and updated associated doctors and patients.");
                     break;
                 // 2. Read Appointment
                 case 2:
@@ -341,35 +359,44 @@ public class Main {
                     break;
                 // 3. Update Appointment
                 case 3:
-                    // Application calls the service layer, not the repository directly
                     System.out.print("Enter Appointment ID: ");
                     appointmentId = scanner.nextInt();
                     scanner.nextLine();  // consume newline
-                    appointment = appointmentService.getAppointmentById(appointmentId);  // Use service here
+                    // Get current appointment
+                    appointment = appointmentService.getAppointmentById(appointmentId);
                     if (appointment != null) {
                         System.out.print("Enter new Patient ID: ");
-                        appointment.getPatient().setPatientId(scanner.nextInt());
+                        // Save for the new appointment
+                        Patient newPatient = patientService.getPatientById(scanner.nextInt());
                         scanner.nextLine(); // clear line
                         System.out.print("Enter new Doctor ID: ");
-                        appointment.getDoctor().setDoctorId(scanner.nextInt());
+                        // Save for the new appointment
+                        Doctor newDoctor = doctorService.getDoctorById(scanner.nextInt());
                         scanner.nextLine(); // clear line
                         System.out.print("Enter new Appointment Date: ");
                         appointment.setAppointmentDate(scanner.nextLine());
                         System.out.print("Enter new notes: ");
                         appointment.setNotes(scanner.nextLine());
-                        appointmentService.updateAppointment(appointment);  // Use service here
+                        // Update Appointment using newDoctor and newPatient
+                        appointmentService.updateAppointment(appointment, newPatient, newDoctor);
                         System.out.println("Appointment updated successfully.");
                     } else {
                         System.out.println("Appointment not found.");
+                        break;
                     }
                     break;
                 // 4. Delete Appointment
                 case 4:
-                    // Application calls the service layer, not the repository directly
                     System.out.print("Enter Appointment ID: ");
                     appointmentId = scanner.nextInt();
-                    appointmentService.deleteAppointment(appointmentId);  // Use service here
-                    System.out.println("Appointment deleted successfully.");
+                    if (appointmentService.getAppointmentById(appointmentId) != null)
+                    {
+                        appointmentService.deleteAppointment(appointmentId);
+                        System.out.println("Appointment deleted successfully.");
+                    } else {
+                        System.out.println("Appointment not found.");
+                        break;
+                    }
                     break;
                 case 5:
                     // Exiting manage doctors menu
@@ -378,8 +405,130 @@ public class Main {
         } while (!exit);
     }
 
-    public void manageOffices(OfficeService officeService, Scanner scanner)
+    public static void manageOffices(OfficeService officeService, DoctorService doctorService, Scanner scanner)
     {
-
+        boolean exit = false;
+        do
+        {
+            System.out.println("1. Create Office");
+            System.out.println("2. Read Office");
+            System.out.println("3. Update Office");
+            System.out.println("4. Delete Office");
+            System.out.println("5. List all Offices");
+            System.out.println("6. Back to Main Menu");
+            System.out.println("--------------------------------");
+            System.out.print("Enter an number: " );
+            int option;
+            try
+            {
+                option = scanner.nextInt();
+                scanner.nextLine();
+            } catch (InputMismatchException e)
+            {
+                System.out.println("Please enter a valid number");
+                scanner.nextLine(); // Clear invalid input
+                option = 0; // Set default value
+            }
+            switch (option)
+            {
+                // create Office
+                case 1:
+                    Office office = new Office();
+                    System.out.print("Enter Location: ");
+                    office.setLocation(scanner.nextLine());
+                    System.out.print("Enter Phone number (ex. 1234567890):");
+                    office.setPhone(scanner.nextLine());
+                    System.out.print("Enter Doctor Id: ");
+                    Doctor doctor = doctorService.getDoctorById(scanner.nextInt());
+                    // Exception Handling if Doctor exists
+                    if (doctor != null) {
+                        office.setDoctor(doctor);
+                    } else
+                    {
+                        System.err.println("Doctor does not exist or there is an error");
+                        break;
+                    }
+                    // Clear line
+                    scanner.nextLine();
+                    officeService.createOffice(office);
+                    System.out.println("Office created successfully.");
+                    break;
+                // 2. Get Office by id
+                case 2:
+                    // Application calls the service layer, not the repository directly
+                    System.out.print("Enter Office ID: ");
+                    Office readOffice = officeService.getOfficeById(scanner.nextInt());  // Use service here
+                    if (readOffice != null)
+                    {
+                        System.out.println("Office ID: " + readOffice.getOfficeId());
+                        System.out.println("Office Location: " + readOffice.getLocation());
+                        System.out.println("Phone Number: " + readOffice.getPhone());
+                        System.out.println("Doctor ID: " + readOffice.getDoctor().getDoctorId());
+                    } else
+                    {
+                        System.out.println("Office not found.");
+                    }
+                    break;
+                // UPDATE office
+                case 3:
+                    // Application calls the service layer, not the repository directly
+                    System.out.print("Enter Office ID: ");
+                    Office updateOffice = officeService.getOfficeById(scanner.nextInt());  // Use service here
+                    scanner.nextLine(); // Clear line
+                    if (updateOffice != null)
+                    {
+                        System.out.print("Enter New Location: ");
+                        updateOffice.setLocation(scanner.nextLine());
+                        System.out.print("Enter New Phone number (ex. 1234567890):");
+                        updateOffice.setPhone(scanner.nextLine());
+                        System.out.print("Enter New Doctor Id: ");
+                        Doctor updateDoctor = doctorService.getDoctorById(scanner.nextInt());
+                        // Exception Handling if doctor exists
+                        if (updateDoctor != null) {
+                            updateOffice.setDoctor(updateDoctor);
+                        } else
+                        {
+                            System.err.println("Doctor does not exist or there is an error");
+                        }
+                        // Clear line
+                        scanner.nextLine();
+                        officeService.updateOffice(updateOffice);
+                    } else
+                    {
+                        System.out.println("Office not found.");
+                    }
+                    break;
+                // DELETE Office
+                case 4:
+                    // Application calls the service layer, not the repository directly
+                    System.out.print("Enter Office ID: ");
+                    int officeId = scanner.nextInt();
+                    scanner.nextLine(); // clear line
+                    if (officeService.getOfficeById(officeId) != null)
+                    {
+                        // Remove reference to associated entity (doctor)
+                        officeService.deleteOffice(officeId);
+                        System.out.println("Office deleted successfully.");
+                    } else
+                    {
+                        System.err.println("Did not delete successfully");
+                    }
+                    break;
+                case 5:
+                    System.out.println("Listing All Offices:");
+                    if (officeService.getAllOffices().isEmpty())
+                    {
+                        System.out.println("List is empty, add an Office or try again");
+                    } else
+                    {
+                        officeService.getAllOffices().forEach(System.out::println);
+                    }
+                    break;
+                case 6:
+                    // Exiting manageOffices
+                    exit = true;
+            }
+        } while (!exit);
     }
+
 }

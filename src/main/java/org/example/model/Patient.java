@@ -1,24 +1,26 @@
 package org.example.model;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@ToString (exclude = {"doctors", "appointments"})
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 
 @Entity
 @Table(name = "Patients")
 public class Patient
 {
     @Id
+    @EqualsAndHashCode.Include
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "PatientID")
     private int patientId;
@@ -44,9 +46,8 @@ public class Patient
             fetch = FetchType.LAZY)
     private List<Appointment> appointments = new ArrayList<>();
 
-    @ManyToMany (mappedBy = "patients",
-                cascade = {CascadeType.PERSIST},
-                fetch = FetchType.LAZY)
-    private List<Doctor> doctors = new ArrayList<>();
+    @ManyToMany (mappedBy = "patients", cascade = CascadeType.PERSIST)
+    private Set<Doctor> doctors = new HashSet<>();
+
 
 }
